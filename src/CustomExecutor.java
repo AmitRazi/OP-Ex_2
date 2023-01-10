@@ -1,56 +1,57 @@
 
-import java.sql.SQLOutput;
 import java.util.concurrent.*;
 
-public class CustomExecutor{
-    private ThreadPoolExecutor executor;
+public class CustomExecutor {
+    private  final ThreadPoolExecutor executor;
     private int currentMaxPriority;
     private boolean stopped = false;
-    private CustomPriorityQueue queue;
+    private final  PriorityBlockingQueue<Runnable> queue;
 
-    public CustomExecutor(){
-        queue = new CustomPriorityQueue();
-       executor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors()/2, Runtime.getRuntime().availableProcessors()-1,
-                300L, TimeUnit.MILLISECONDS, queue){
-           @Override
-           protected void beforeExecute(Thread t, Runnable r) {
-              Task task = (Task) queue.peek();
-              if(task != null){
-              currentMaxPriority = task.getPriority();}
-              else{
-                  currentMaxPriority = 0;
-              }
-           }
-       };
+    public CustomExecutor() {
+        queue = new PriorityBlockingQueue<>();
+        executor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() / 2, Runtime.getRuntime().availableProcessors() - 1,
+                300L, TimeUnit.MILLISECONDS, queue) {
+            @Override
+            protected void beforeExecute(Thread t, Runnable r) {
+                Task task = (Task) queue.peek();
+                if (task != null) {
+                    currentMaxPriority = task.getPriority();
+                } else {
+                    currentMaxPriority = 0;
+                }
+            }
+        };
     }
 
 
-    public <T> Future<T> submit(Task task){
-        if(stopped == false) {
+    public <T> CustomFuture<T> submit(Task task) {
+        if (stopped == false) {
             executor.execute(task);
-            System.out.println(executor.getCorePoolSize());
-            return task;
+            return new CustomFuture<>(task, task.getLatch());
         }
         return null;
     }
 
-    public <T> Future<T> submit(Callable<T> op){
+    public <T> CustomFuture<T> submit(Callable<T> op) {
         return submit(Task.createTask(op));
     }
 
-    public <T> Future<T> submit(Callable<T> op,TaskType type){
+    public <T> CustomFuture<T> submit(Callable<T> op, TaskType type) {
         return submit(Task.createTask(op, type));
     }
 
-    public int getCurrentMaxPriority(){
+    public <T> CustomFuture<T> submit(Runnable op) {
+        return submit(Task.createTask(Executors.callable(op)));
+    }
+
+    public int getCurrentMaxPriority() {
         return currentMaxPriority;
     }
-    public void shutdown(){
+
+    public void shutdown() {
         stopped = true;
         executor.shutdown();
     }
-
-
 
 
 }
