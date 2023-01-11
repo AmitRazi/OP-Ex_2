@@ -7,8 +7,8 @@ public class CustomFuture<T> implements Future<T> {
     private final CountDownLatch latch;
     private boolean cancel = false;
 
-    public CustomFuture(Task task, CountDownLatch latch) {
-        this.latch = latch;
+    public CustomFuture(Task task) {
+        this.latch = task.getLatch();
         this.task = task;
     }
 
@@ -16,7 +16,7 @@ public class CustomFuture<T> implements Future<T> {
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
         cancel = true;
-        if(isDone() == false){
+        if (isDone() == false) {
             task.cancel();
             return true;
         }
@@ -34,14 +34,14 @@ public class CustomFuture<T> implements Future<T> {
 
     @Override
     public T get() throws InterruptedException, ExecutionException {
-        if(isCancelled() == true) return null;
+        if (isCancelled() == true) return null;
         latch.await();
         return (T) task.getRes();
     }
 
     @Override
     public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        if(isCancelled() == true) return null;
+        if (isCancelled() == true) return null;
         if (latch.await(timeout, unit)) {
             return (T) task.getRes();
         } else {
@@ -54,3 +54,4 @@ public class CustomFuture<T> implements Future<T> {
         return task.toString();
     }
 }
+
