@@ -1,3 +1,5 @@
+package Part_1;
+
 enum TaskType {
     COMPUTATIONAL(1), IO(2), OTHER(3);
 

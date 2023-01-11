@@ -1,3 +1,5 @@
+package Part_1;
+
 import java.util.concurrent.*;
 
 public class Task<T> implements Runnable, Comparable<Task> {
@@ -82,7 +84,7 @@ public class Task<T> implements Runnable, Comparable<Task> {
 
     @Override
     public String toString() {
-        return "Task{" +
+        return "Part_1.Task{" +
                 "Type=" + type +
                 ", Finished=" + finished +
                 ", Result=" + res +
