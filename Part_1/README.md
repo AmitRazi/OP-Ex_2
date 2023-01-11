@@ -68,7 +68,7 @@ The class has one constructor which gets the name of the file to perform the tas
 In our implemention, it counts the number of lines and **returns** the count.
 
 ### Class Diagram
-![This is an image](image.png)
+![This is an image](Screenshot_2.jpg)
 
 
 ## Test Method
