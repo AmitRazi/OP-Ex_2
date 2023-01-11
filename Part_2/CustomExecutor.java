@@ -3,19 +3,19 @@ package Part_2;
 import java.util.concurrent.*;
 
 public class CustomExecutor {
-    private  final ThreadPoolExecutor executor;
+    private final ThreadPoolExecutor executor;
     private int currentMaxPriority;
     private boolean stopped = false;
-    private final  PriorityBlockingQueue<Runnable> queue;
 
     public CustomExecutor() {
-        queue = new PriorityBlockingQueue<>();
+        PriorityBlockingQueue<Runnable> queue = new PriorityBlockingQueue<>();
         executor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() / 2, Runtime.getRuntime().availableProcessors() - 1,
                 300L, TimeUnit.MILLISECONDS, queue) {
             @Override
             protected void beforeExecute(Thread t, Runnable r) {
-                Task task = (Task) queue.peek();
+                Task task = (Task) this.getQueue().peek();
                 if (task != null) {
+                    System.out.println(getCurrentMaxPriority() + " " + Thread.currentThread().getName());
                     currentMaxPriority = task.getPriority();
                 } else {
                     currentMaxPriority = 0;
@@ -28,7 +28,7 @@ public class CustomExecutor {
     public <T> CustomFuture<T> submit(Task task) {
         if (stopped == false) {
             executor.execute(task);
-            return new CustomFuture<>(task, task.getLatch());
+            return new CustomFuture<>(task);
         }
         return null;
     }
