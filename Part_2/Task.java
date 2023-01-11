@@ -21,7 +21,15 @@ public class Task<T> implements Runnable, Comparable<Task> {
     }
 
     public static <T> Task createTask(Callable<T> op) {
-        return new Task(op, TaskType.OTHER);
+        return createTask(op, TaskType.OTHER);
+    }
+
+    public static <T> Task createTask(Runnable op){
+        return createTask(Executors.callable(op),TaskType.OTHER);
+    }
+
+    public static <T> Task createTask(Runnable op, TaskType type){
+        return createTask(Executors.callable(op),type);
     }
 
     public int getPriority() {
