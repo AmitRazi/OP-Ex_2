@@ -14,7 +14,7 @@ The class variables are:
 5. ```boolean finished``` - Indicates whether the task has been performed. Intiated to false.
 6. ```T res``` - A generic type the hold the callable operation return value.
 
-The class constructor are private. In order to create a Task instance, the class exposes four factory creation method:
+The class constructors are private. In order to create a Task instance, the class exposes four factory creation methods:
 1. Receives a Callable operation and TaskType.
 2. Receives only a Callable operation. The method adds a default TaskType of type ```OTHER``` and delegates the creation to the first method.
 3. Receives a Runnable operation. The method wraps the Runnable using Executors static method ```callable()```, adds a default TaskType of type ```OTHER```, and delegates the creation to the first method.
@@ -27,8 +27,6 @@ The class variables are:
 2. ```CountDownLatch latch``` - This latch is shared between a Task instance and it's associated CustomFuture instance. The latch facilitates the ability to time out when the timed ```get``` method is used.
 3. ```boolean cancel``` - Indicates whether the user wants to cancel the task.
 
-The class has one constructor the receives a Task instance.
-
 ### CustomExecutor
 A custom priority based ThreadPoolExecutor. 
 The class variables are:
@@ -38,56 +36,13 @@ The class variables are:
 ### Class Diagram
 ![This is an image](package.png)
 
+## Design and Diffculites
+Most the functionalty required for such a priority based concurrent execution system, is already provided in other class of JAVA. Thus, the main design principle we tried to adhere to, was composition over inheritance. Our instinct was to extend known classes provided by JAVA, but that produced very messy code that was hard to follow, adjust, and each class was tightly coupled with numerous base classes. Again and again we encourated situtions where one extension in a class, limited our ability to implemenet desired functionality in a second class that has to communicate with the first. Then we decided to implement everything top-down by ourselves. The Thread Pool, the Executor, the Task, the Future. And even though the code did work, and we've learned a lot about these systems in the proccess - everything we can do, JAVA engineers can do better. So finally, we've decided to rely on the previously tried and tested impelmantions of JAVA, only this time, using composition and not inheritance. The customExecutor uses an instance of ThreadPoolExecutor to which it delegates most of the operations it needs to perform, and the logic behind them. Overall, our design doesn't use inheritance at all. This allows our classes to stay very small and very concise. Furthermore, each class has a very clear and single responsibility. 
 
-## Test Method
-Because of the unpredictability of threads, we will test each counting method on the same exact files, and perform the count 50 times. We will keep the times in an array, calculate the average for each method, and compare them.
+Task - Responsible for task specifition.
 
-We will use 10000 text files with 507423417 lines overall.
+CustomFuture - Responsible to retreive the result.
 
-## Results
-#### Method A (Single Thread)
-Longest Time: 19.359 sec
+CustomExecuter - Responsible for priority based scheduling.
 
-Fastest Time: 14.31 sec
-
-Average Time: 14.681 sec
-
-#### Method B (LineReaderThread)
-Longest Time: 10.238 sec
-
-Fastest Time: 6.246 sec
-
-Average Time: 8.363 sec
-
-#### Method C (CallableLineReader)
-Longest Time: 9.878 sec
-
-Fastest Time: 6.704 sec
-
-Average Time: 8.744 sec
-
-Please note that on different runs, the results vary. The Longest Time of Method B and Method C can go up to even 20 sec. Also, the fastest Average Time of Method b and Method C are too close to call which is faster.
-
-## Conclusions
-We'll start with the method that uses one thread. It is by far the slowest method, and for an obvious reason. Method A uses a single thread, mains thread, to count the lines of all 10000 files. In contrast to the two other mehotds, which count the lines of **all** files in parallel, Method A needs to finish with one file to start with another. 
-
-Now lets try to understand why the times of Method B and Method C are so similar.
-Method C uses the ExecutorService to create and manage 10000 threads (in our test). From JavaDocs:
-> An Executor that provides methods to manage termination and methods that can produce a Future for tracking progress of one or more asynchronous tasks.
-
-The ExecutorService should be used when we want a fixed number of threads to perform a number of tasks **greater** then the thread count. It prevents thread terminition in case there are tasks waiting in it's queue. In our case, the assignment specification calls for a fixed ThreadPool of size ```fileNames.length()```, thus, it nullifies this advandtage of using ExecutorService because no task will be waiting in the queue.
-
-In Method B we create ```fileNames.length()``` instances of our custom class LineReaderThread. Basically, just like in Method C, in Method B we have a designated thread to count the lines for each file.
-
-All in all, this just mean that Method B and Method C. perform in a similiar manner and with similiar results. The main difference of Method B and Method C stems from the strategy to retieve the number of lines of each file.
-
-In Method B we call LineReaderThreads class funtion 
-```java
-public int getCount(){
-        return this.count;
-    }
-```
-
-In method C we Futures to get the value of the line back from the ExecutorService. In theory, it makes sense that this appoarch will add an overhead that might give Method B an advantage.
-
-But alas, it's too close to call.
+Because we don't use inheritance, our classes are lossly coupled. We aren't dependent on base classes that may change and force us to adjuct our code accordingly. Are code is also flexable. Because we use compsition and delegate the logic, we can easily change the executor we use in one line and the system will work the same. Also, our design means the number of lines in our code are very small. Excluding basic functions such as, ```HashCode()```,```equals()```. and ```toString()```, each class consists of about 50 lines. Small classes - higher maintainability.
