@@ -4,66 +4,39 @@ This is the second part of the second assignment.
  Our goal was to create a priority based concurrent execution system. We had to make a Task class that represent a generic task that may return a value of some type, and a CustomExecutor class - An executor that can run the tasks asynchronously, and do so in the order of their priority.
 
 ## The Classes
-### Ex2_1
-This class contians five static functions:
+### Task
+This class represents to the task performed. The class implements the Runnanle and comparable interfaces. The Runnable interface to allow the execution of the task to be performed by another thread, and the comparable interface to allow the CustomExecutor to compare tasks by their priority. 
+The class variables are:
+1. ```TaskType type``` - Enum, responsible for the tasks type and priority.
+2. ```Callable<V> op``` - The class also wraps a callable instance which actually performs the actual task.
+3. ```CountDownLatch latch``` - This latch is shared between a Task instance and it's associated CustomFuture instance. The latch facilitates the ability to time out when the timed ```get``` method is used.
+4. ```boolean cancelled``` - Indicates whether the task has been cancelled. Initiated to false.
+5. ```boolean finished``` - Indicates whether the task has been performed. Intiated to false.
+6. ```T res``` - A generic type the hold the callable operation return value.
 
-```java 
-public static String[] createTextFiles(int n, int seed, int bound){...}'
-```
-Creates *n* files with at most *bound* lines.  *seed* is used for the creation of random numbers of lines.
+The class constructor are private. In order to create a Task instance, the class exposes four factory creation method:
+1. Receives a Callable operation and TaskType.
+2. Receives only a Callable operation. The method adds a default TaskType of type ```OTHER``` and delegates the creation to the first method.
+3. Receives a Runnable operation. The method wraps the Runnable using Executors static method ```callable()```, adds a default TaskType of type ```OTHER```, and delegates the creation to the first method.
+4. Same as 3 only it recieves a TaskType as well.
 
-```java 
-private static void fillTextFiles(File file, int bound){...}
-```
-This is a private helper functions for the createTextFiles. The functiont generates a random number bounded by *bound* and fills *file* with the generated number of lines.
-```java 
-public static int getNumOfLines(String[] fileNames){...}
-```
-Gets an array of file names and sums the number of lines in all the files. This function perfoms the computation in a single thread.
-```java 
-public static int getNumOfLinesThreads(String[] fileNames){...}
-```
-Gets an array of file names and sums the number of lines in all the files. This function creates delegates the counting to ```fileNames.length()``` instances of the LineReaderThread class.
-```java 
-public static int getNumOfLinesThreadPool(String[] fileNames){...}
-```
-Gets an array of file names and sums the number of lines in all the files. This function delegates the counting to ```fileNames.length()``` instances of the CallableLineReader class.
-It uses a fixed ThreadPool of size ```fileNames.length()``` to run all the instances.
+### CustomFuture
+This class responsibility is to return the value of the operation performed by Task. The class is a generic class and it implements the Future interfcae.
+The class variables are:
+1. ```Task task``` - The associated task. The instance is will retrieve the result of this task.
+2. ```CountDownLatch latch``` - This latch is shared between a Task instance and it's associated CustomFuture instance. The latch facilitates the ability to time out when the timed ```get``` method is used.
+3. ```boolean cancel``` - Indicates whether the user wants to cancel the task.
 
-### LineReaderThread
-This class extends Thread class. It has two class variable: ```String fileName```, ```int count```.
+The class has one constructor the receives a Task instance.
 
-```java
-public LineReaderThread(String fileName)
-```
-The class has one constructor which gets the name of the file to perform the task on.
-
-```java
-@Override
- public void run(){...}
-```
-The function inherited from the Thread class. In our implemention, it counts the number of lines and **updates** the class variable *count*.
-```java
-public int getCount(){
-        return this.count;
-    }
-```
-Returns the number of lines in the file.
-
-### CallableLineReader
-This class implements the Callable interface. It has one class variable  ```String fileName```.
-```java
-public CallableLineReader(String fileName)
-```
-The class has one constructor which gets the name of the file to perform the task on.
-```java
-@Override
- public Integer call() throws Exception {...}
-```
-In our implemention, it counts the number of lines and **returns** the count.
-
+### CustomExecutor
+A custom priority based ThreadPoolExecutor. 
+The class variables are:
+1. ```ThreadPoolExecutor executor``` - Most of the class's responsibility and logic is delegated to this ThreadPoolExecutor instance.
+2. ```int currentMaxPriority``` - Holds the highest priority currently in the executors thread pool.
+3. ```boolean stopped``` - Indicates whether the executor is shutting down or shut down.
 ### Class Diagram
-![This is an image](image.png)
+![This is an image](package.png)
 
 
 ## Test Method
