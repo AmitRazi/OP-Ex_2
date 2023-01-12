@@ -2,6 +2,10 @@ package Part_2;
 
 import java.util.concurrent.*;
 
+/**
+ * This class Represents a task with a TaskType that may return a value of some type.
+ * @param <T> - The type of result to be returned
+ */
 public class Task<T> implements Runnable, Comparable<Task> {
     private final Callable<T> op;
     private final TaskType type;
@@ -11,51 +15,111 @@ public class Task<T> implements Runnable, Comparable<Task> {
     private T res;
 
 
+    /**
+     * Parametrized Constructor
+     *
+     * @param op   - A Callable, holds the operation to be performed and the type to be returned.
+     * @param type - The task type and the priority of the task to be performed.
+     */
     private Task(Callable<T> op, TaskType type) {
         this.op = op;
         this.type = type;
     }
 
+    /**
+     * Factory method for safe creation of a task. Receives both a Callable and a TaskType.
+     *
+     * @param op   - A Callable, holds the operation to be performed and the type to be returned.
+     * @param type - The task type and the priority of the task to be performed.
+     * @param <T>  - The type of result to be returned.
+     * @return A Task instance.
+     */
     public static <T> Task createTask(Callable<T> op, TaskType type) {
-        return new Task(op, type);
+        if (op != null)
+            return new Task(op, type);
+        return null;
     }
 
+    /**
+     * Factory method for safe creation of a task. Receives a Callable, add a default TaskType.
+     *
+     * @param op  - A Callable, holds the operation to be performed and the type to be returned.
+     * @param <T> The type of result to be returned.
+     * @return A Task instance.
+     */
     public static <T> Task createTask(Callable<T> op) {
         return createTask(op, TaskType.OTHER);
     }
 
-    public static <T> Task createTask(Runnable op){
-        return createTask(Executors.callable(op),TaskType.OTHER);
+    /**
+     * Factory method for safe creation of a task. Receives a Runnable that represents a task that does not return a value.
+     * The method wraps the Runnable in a Callable and adds a default TaskType.
+     *
+     * @param op - A Runnable, holds the operation to be performed.
+     * @return A Task instance
+     */
+    public static Task createTask(Runnable op) {
+        return createTask(Executors.callable(op), TaskType.OTHER);
     }
 
-    public static <T> Task createTask(Runnable op, TaskType type){
-        return createTask(Executors.callable(op),type);
+    /**
+     * @param op   - Factory method for safe creation of a task. Receives a Runnable that represents a task that does not return a value, and a TaskType.
+     *             The method wraps the Runnable in a Callable.
+     * @param type - The task type and the priority of the task to be performed.
+     * @return A Task instance.
+     */
+    public static Task createTask(Runnable op, TaskType type) {
+        return createTask(Executors.callable(op), type);
     }
 
+    /**
+     * @return The priority of the task.
+     */
     public int getPriority() {
         return type.getTypePriority();
     }
 
-
+    /**
+     * @return true if the task has completed, false otherwise.
+     */
     public boolean isFinished() {
         return finished;
     }
 
+    /**
+     * Used for the associated CustomFuture get method.
+     *
+     * @return returns the CountDownLatch instance.
+     */
     public CountDownLatch getLatch() {
         return this.latch;
     }
 
-    public void cancel(){
-        if(isFinished() == false)
+    /**
+     * Cancels th task.
+     */
+    public void cancel() {
+        if (isFinished() == false)
             cancelled = true;
     }
+
+    /**
+     * @return If the task has returned a value, returns the result, otherwise, return null.
+     */
     public T getRes() {
-        return res;
+        if (res != null) {
+            return res;
+        }
+        return null;
     }
 
+    /**
+     * Implementation of the Runnable interface, runs the Callable operation. Once the operation has finished, the latch countdown mathod is invoked
+     * and the associated CustomFuture will be able to retrieve the result.
+     */
     @Override
     public void run() {
-        if(cancelled == false) {
+        if (cancelled == false) {
             try {
                 res = op.call();
                 latch.countDown();
