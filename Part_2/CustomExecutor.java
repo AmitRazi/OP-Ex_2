@@ -10,6 +10,9 @@ public class CustomExecutor {
     private final ThreadPoolExecutor executor;
     private final int priorityArray[] = new int[11];
     private boolean stopped = false;
+    private final static int corePoolSize = Runtime.getRuntime().availableProcessors()/2;
+    private final static int maxPoolSize = Runtime.getRuntime().availableProcessors()-1;
+    private final static long keepAliveTime = 300L;
 
     /**
      * Parametrized Constructor
@@ -21,8 +24,8 @@ public class CustomExecutor {
      */
     public CustomExecutor() {
         PriorityBlockingQueue<Runnable> queue = new PriorityBlockingQueue<>();
-        executor = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() / 2, Runtime.getRuntime().availableProcessors() - 1,
-                300L, TimeUnit.MILLISECONDS, queue) {
+        executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize,
+                keepAliveTime, TimeUnit.MILLISECONDS, queue) {
             @Override
             protected void beforeExecute(Thread t, Runnable r) {
                 Task task = (Task) r;
@@ -145,3 +148,4 @@ public class CustomExecutor {
                 '}';
     }
 }
+
